@@ -1,0 +1,6 @@
+s3:
+  bucket: sample
+  region: us-east-1
+  endpoint: http://localhost:9001
+  access-id: minio
+  secret-key: changeme
