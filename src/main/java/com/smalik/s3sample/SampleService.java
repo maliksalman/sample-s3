@@ -4,46 +4,38 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.thedeanda.lorem.Lorem;
 import com.thedeanda.lorem.LoremIpsum;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class SampleService {
 
-    private Lorem lorem;
-    private ObjectMapper mapper;
-    private S3Client client;
-    private String bucket;
+    private final Lorem lorem = LoremIpsum.getInstance();
+    private final ObjectMapper mapper = new ObjectMapper();
 
-    public SampleService(S3Client client, @Value("${s3.bucket}") String bucket) {
-        this.client = client;
-        this.bucket = bucket;
-        this.mapper = new ObjectMapper();
-        this.lorem = LoremIpsum.getInstance();
-    }
+    private final S3Client client;
+    private final AppConfig.S3ClientConfig config;
 
     public Sample create() throws JsonProcessingException {
-
-        Sample sample = new Sample();
-        sample.setCreated(new Date());
-        sample.setId(UUID.randomUUID().toString());
-        sample.setData(lorem.getWords(5,7));
-
+        Sample sample = Sample.builder()
+                .created(new Date())
+                .id(UUID.randomUUID().toString())
+                .data(lorem.getWords(5,7))
+                .build();
         client.putObject(
             PutObjectRequest.builder()
-                    .bucket(bucket)
+                    .bucket(config.getBucket())
                     .key(sample.getId())
                     .contentType("application/json")
+                    .acl(ObjectCannedACL.BUCKET_OWNER_FULL_CONTROL)
                     .build(),
             RequestBody.fromString(mapper.writeValueAsString(sample)));
         return sample;
@@ -51,17 +43,17 @@ public class SampleService {
 
     public List<String> listSortedByLastModified() {
         ListObjectsV2Response response = client.listObjectsV2(ListObjectsV2Request.builder()
-                .bucket(bucket)
+                .bucket(config.getBucket())
                 .build());
         return response.contents().stream()
-                .sorted((o1,o2) -> o1.lastModified().compareTo(o2.lastModified()))
-                .map(o -> o.key())
+                .sorted(Comparator.comparing(S3Object::lastModified))
+                .map(S3Object::key)
                 .collect(Collectors.toList());
     }
 
     public Optional<Sample> findById(String id) throws JsonProcessingException {
         ResponseBytes<GetObjectResponse> bytes = client.getObjectAsBytes(GetObjectRequest.builder()
-                .bucket(bucket)
+                .bucket(config.getBucket())
                 .key(id)
                 .build());
 
@@ -70,7 +62,7 @@ public class SampleService {
 
     public void deleteById(String id) {
         client.deleteObject(DeleteObjectRequest.builder()
-                .bucket(bucket)
+                .bucket(config.getBucket())
                 .key(id)
                 .build());
     }

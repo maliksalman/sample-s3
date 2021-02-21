@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'com.smalik'
-version = '0.0.1-SNAPSHOT'
+version = '1.0-SNAPSHOT'
 sourceCompatibility = '11'
 
 repositories {
@@ -14,7 +14,13 @@ repositories {
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+
 	implementation platform('software.amazon.awssdk:bom:2.15.7')
 	implementation 'software.amazon.awssdk:s3'
+
 	implementation 'com.thedeanda:lorem:2.1'
+	implementation 'org.springdoc:springdoc-openapi-ui:1.5.4'
 }

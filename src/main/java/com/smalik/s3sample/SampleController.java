@@ -1,17 +1,15 @@
 package com.smalik.s3sample;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 
 @RestController
+@RequiredArgsConstructor
 public class SampleController {
 
-    private SampleService service;
-
-    public SampleController(SampleService service) {
-        this.service = service;
-    }
+    private final SampleService service;
 
     @PostMapping("/s3")
     public Sample createSample() throws Exception {
