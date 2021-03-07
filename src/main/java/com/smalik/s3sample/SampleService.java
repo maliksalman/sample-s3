@@ -41,7 +41,7 @@ public class SampleService {
                         .bucket(config.getBucket())
                         .key(sample.getId())
                         .contentType("application/json")
-                        .acl(ObjectCannedACL.BUCKET_OWNER_FULL_CONTROL)
+                        .acl(ObjectCannedACL.AUTHENTICATED_READ)
                         .build(),
                 RequestBody.fromString(mapper.writeValueAsString(sample)));
         return sample;
