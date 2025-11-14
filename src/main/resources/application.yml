@@ -1,6 +1,9 @@
+springdoc:
+  swagger-ui:
+    path: /
 s3:
   bucket: sample
   region: us-east-1
-  endpoint: http://localhost:9001
+  endpoint: http://127.0.0.1:9001
   access-id: minio
   secret-key: changeme

@@ -10,13 +10,13 @@ import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
-import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 
 import java.net.URL;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -36,21 +36,17 @@ public class SampleService {
                 .id(UUID.randomUUID().toString())
                 .data(lorem.getWords(5, 7))
                 .build();
-        client.putObject(
-                PutObjectRequest.builder()
+        client.putObject(b -> b
                         .bucket(config.getBucket())
                         .key(sample.getId())
                         .contentType("application/json")
-                        .acl(ObjectCannedACL.AUTHENTICATED_READ)
-                        .build(),
+                        .acl(ObjectCannedACL.AUTHENTICATED_READ),
                 RequestBody.fromString(mapper.writeValueAsString(sample)));
         return sample;
     }
 
     public List<String> listSortedByLastModified() {
-        ListObjectsV2Response response = client.listObjectsV2(ListObjectsV2Request.builder()
-                .bucket(config.getBucket())
-                .build());
+        ListObjectsV2Response response = client.listObjectsV2(b -> b.bucket(config.getBucket()));
         return response.contents().stream()
                 .sorted(Comparator.comparing(S3Object::lastModified))
                 .map(S3Object::key)
@@ -58,29 +54,35 @@ public class SampleService {
     }
 
     public Sample findById(String id) throws JsonProcessingException {
-        ResponseBytes<GetObjectResponse> bytes = client.getObjectAsBytes(GetObjectRequest.builder()
+        ResponseBytes<GetObjectResponse> bytes = client.getObjectAsBytes(b -> b
                 .bucket(config.getBucket())
-                .key(id)
-                .build());
+                .key(id));
         return mapper.readValue(bytes.asUtf8String(), Sample.class);
+    }
+
+    public Map<String, Object> findMetadataById(String id) {
+        HeadObjectResponse response = client.headObject(b -> b
+                .bucket(config.getBucket())
+                .key(id));
+        return Map.of(
+                "content-length", response.contentLength(),
+                "etag", response.eTag(),
+                "last-modified", response.lastModified());
     }
 
     public URL getPresignedUrl(String id, int timeToLiveMinutes) {
         return presigner
-                .presignGetObject(GetObjectPresignRequest.builder()
-                        .getObjectRequest(GetObjectRequest.builder()
+                .presignGetObject(b -> b
+                        .getObjectRequest(orb -> orb
                                 .bucket(config.getBucket())
-                                .key(id)
-                                .build())
-                        .signatureDuration(Duration.ofMinutes(timeToLiveMinutes))
-                        .build())
+                                .key(id))
+                        .signatureDuration(Duration.ofMinutes(timeToLiveMinutes)))
                 .url();
     }
 
     public void deleteById(String id) {
-        client.deleteObject(DeleteObjectRequest.builder()
+        client.deleteObject(b -> b
                 .bucket(config.getBucket())
-                .key(id)
-                .build());
+                .key(id));
     }
 }

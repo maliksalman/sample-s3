@@ -3,10 +3,12 @@ package com.smalik.s3sample;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 
 import java.net.URL;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -27,6 +29,11 @@ public class SampleController {
     @GetMapping("/s3/{id}")
     public Sample getSample(@PathVariable("id") String id) throws Exception {
         return service.findById(id);
+    }
+
+    @GetMapping("/s3/{id}/metadata")
+    public Map<String, Object> getMetadata(@PathVariable("id") String id) {
+        return service.findMetadataById(id);
     }
 
     @GetMapping("/s3/{id}/url")
