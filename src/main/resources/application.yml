@@ -4,6 +4,6 @@ springdoc:
 s3:
   bucket: sample
   region: us-east-1
-  endpoint: http://127.0.0.1:9001
-  access-id: minio
+  endpoint: http://127.0.0.1:9000
+  access-id: admin
   secret-key: changeme
